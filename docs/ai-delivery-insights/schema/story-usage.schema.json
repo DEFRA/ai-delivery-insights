@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AI Delivery Insights story usage report",
+  "description": "The report AI Delivery Insights writes into an Azure DevOps work item's description for one story. Field names are borrowed from GitHub's Copilot usage metrics shape, but this is not a GitHub format. Contains no prompt text, responses, session titles, file names, paths, repository names, workspace names, user names or e-mail addresses.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "generated_at", "story", "totals", "credit_basis", "totals_by_model", "totals_by_feature", "totals_by_phase", "days", "traditional_effort", "contributors"],
+  "properties": {
+    "schema": { "const": "copilot-lens/story-usage" },
+    "schema_version": { "const": 1 },
+    "generated_at": { "$ref": "#/definitions/isoDateTime" },
+    "story": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ado_id", "story_points"],
+      "properties": {
+        "ado_id": { "type": ["integer", "null"] },
+        "story_points": { "type": ["number", "null"] }
+      }
+    },
+    "totals": { "$ref": "#/definitions/totals" },
+    "credit_basis": { "$ref": "#/definitions/creditBasis" },
+    "totals_by_model": { "type": "array", "items": { "$ref": "#/definitions/modelEntry" } },
+    "totals_by_feature": { "type": "array", "items": { "$ref": "#/definitions/featureEntry" } },
+    "totals_by_phase": { "type": "array", "items": { "$ref": "#/definitions/phaseEntry" } },
+    "days": { "type": "array", "items": { "$ref": "#/definitions/dayEntry" } },
+    "traditional_effort": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/definitions/effort" }]
+    },
+    "contributors": { "type": "array", "items": { "$ref": "#/definitions/contributor" } }
+  },
+  "definitions": {
+    "nonNegNumber": { "type": "number", "minimum": 0 },
+    "nonNegInt": { "type": "integer", "minimum": 0 },
+    "dayOrEmpty": { "type": "string", "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$" },
+    "dayStrict": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "isoDateTime": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" },
+    "isoDateTimeOrEmpty": { "type": "string", "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$" },
+    "idString": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$" },
+    "idStringOrEmpty": { "anyOf": [{ "$ref": "#/definitions/idString" }, { "const": "" }] },
+    "slug": { "type": "string", "pattern": "^[a-z0-9_]{1,40}$" },
+    "phaseEnum": {
+      "type": "string",
+      "enum": ["analysis", "plan", "build", "test", "bugfix", "review", "refactor", "docs", "release", "other", "background"]
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_count", "user_initiated_interaction_count", "credits", "cost_usd", "input_tokens", "output_tokens", "cached_input_tokens", "background_credits", "first_day", "last_day"],
+      "properties": {
+        "session_count": { "$ref": "#/definitions/nonNegInt" },
+        "user_initiated_interaction_count": { "$ref": "#/definitions/nonNegInt" },
+        "credits": { "$ref": "#/definitions/nonNegNumber" },
+        "cost_usd": { "$ref": "#/definitions/nonNegNumber" },
+        "input_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "output_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "cached_input_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "background_credits": { "$ref": "#/definitions/nonNegNumber" },
+        "first_day": { "$ref": "#/definitions/dayOrEmpty" },
+        "last_day": { "$ref": "#/definitions/dayOrEmpty" }
+      }
+    },
+    "creditBasis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["billed", "token_priced", "estimated"],
+      "properties": {
+        "billed": { "$ref": "#/definitions/nonNegNumber" },
+        "token_priced": { "$ref": "#/definitions/nonNegNumber" },
+        "estimated": { "$ref": "#/definitions/nonNegNumber" }
+      }
+    },
+    "modelEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "user_initiated_interaction_count", "credits", "input_tokens", "output_tokens"],
+      "properties": {
+        "model": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "user_initiated_interaction_count": { "$ref": "#/definitions/nonNegInt" },
+        "credits": { "$ref": "#/definitions/nonNegNumber" },
+        "input_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "output_tokens": { "$ref": "#/definitions/nonNegInt" }
+      }
+    },
+    "featureEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feature", "user_initiated_interaction_count", "credits", "input_tokens", "output_tokens"],
+      "properties": {
+        "feature": { "$ref": "#/definitions/slug" },
+        "user_initiated_interaction_count": { "$ref": "#/definitions/nonNegInt" },
+        "credits": { "$ref": "#/definitions/nonNegNumber" },
+        "input_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "output_tokens": { "$ref": "#/definitions/nonNegInt" }
+      }
+    },
+    "phaseEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "user_initiated_interaction_count", "credits", "input_tokens", "output_tokens"],
+      "properties": {
+        "phase": { "$ref": "#/definitions/phaseEnum" },
+        "user_initiated_interaction_count": { "$ref": "#/definitions/nonNegInt" },
+        "credits": { "$ref": "#/definitions/nonNegNumber" },
+        "input_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "output_tokens": { "$ref": "#/definitions/nonNegInt" }
+      }
+    },
+    "dayEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["day", "user_initiated_interaction_count", "credits", "input_tokens", "output_tokens"],
+      "properties": {
+        "day": { "$ref": "#/definitions/dayStrict" },
+        "user_initiated_interaction_count": { "$ref": "#/definitions/nonNegInt" },
+        "credits": { "$ref": "#/definitions/nonNegNumber" },
+        "input_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "output_tokens": { "$ref": "#/definitions/nonNegInt" }
+      }
+    },
+    "effortInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commits": { "$ref": "#/definitions/nonNegNumber" },
+        "prod_lines": { "$ref": "#/definitions/nonNegNumber" },
+        "test_lines": { "$ref": "#/definitions/nonNegNumber" },
+        "files": { "$ref": "#/definitions/nonNegNumber" },
+        "story_points": { "$ref": "#/definitions/nonNegNumber" }
+      }
+    },
+    "effort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hours", "low_hours", "high_hours", "source", "method", "confidence", "set_at", "set_by", "note", "inputs"],
+      "properties": {
+        "hours": { "type": "number", "exclusiveMinimum": 0, "maximum": 100000 },
+        "low_hours": { "type": ["number", "null"] },
+        "high_hours": { "type": ["number", "null"] },
+        "source": { "type": "string", "enum": ["manual", "estimated"] },
+        "method": { "type": "string", "enum": ["", "size-v1"] },
+        "confidence": { "type": "string", "enum": ["manual", "high", "medium", "low"] },
+        "set_at": { "$ref": "#/definitions/isoDateTimeOrEmpty" },
+        "set_by": { "$ref": "#/definitions/idStringOrEmpty" },
+        "note": { "type": "string", "maxLength": 200 },
+        "inputs": { "$ref": "#/definitions/effortInputs" }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_id", "first_day", "last_day", "user_initiated_interaction_count", "credits", "input_tokens", "output_tokens", "cached_input_tokens", "background_credits", "credit_basis", "totals_by_model", "totals_by_feature", "totals_by_phase", "days"],
+      "properties": {
+        "session_id": { "$ref": "#/definitions/idString" },
+        "first_day": { "$ref": "#/definitions/dayOrEmpty" },
+        "last_day": { "$ref": "#/definitions/dayOrEmpty" },
+        "user_initiated_interaction_count": { "$ref": "#/definitions/nonNegInt" },
+        "credits": { "$ref": "#/definitions/nonNegNumber" },
+        "input_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "output_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "cached_input_tokens": { "$ref": "#/definitions/nonNegInt" },
+        "background_credits": { "$ref": "#/definitions/nonNegNumber" },
+        "credit_basis": { "$ref": "#/definitions/creditBasis" },
+        "totals_by_model": { "type": "array", "items": { "$ref": "#/definitions/modelEntry" } },
+        "totals_by_feature": { "type": "array", "items": { "$ref": "#/definitions/featureEntry" } },
+        "totals_by_phase": { "type": "array", "items": { "$ref": "#/definitions/phaseEntry" } },
+        "days": { "type": "array", "items": { "$ref": "#/definitions/dayEntry" } }
+      }
+    },
+    "contributor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contributor_id", "display_name", "last_synced_at", "sessions"],
+      "properties": {
+        "contributor_id": { "$ref": "#/definitions/idString" },
+        "display_name": { "type": "string", "maxLength": 100 },
+        "last_synced_at": { "$ref": "#/definitions/isoDateTimeOrEmpty" },
+        "sessions": { "type": "array", "items": { "$ref": "#/definitions/session" } }
+      }
+    }
+  }
+}

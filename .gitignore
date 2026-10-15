@@ -1,0 +1,14 @@
+# Local to the extension so the repository's root .gitignore is left alone.
+node_modules/
+*.vsix
+out/
+dist/
+coverage/
+.vscode-test/
+.github
+docs
+# The usage-report schema is read by test/test-usage-schema.js and must be committed even though docs/ is otherwise ignored.
+!docs/
+!docs/ai-delivery-insights/
+!docs/ai-delivery-insights/schema/
+!docs/ai-delivery-insights/schema/story-usage.schema.json

@@ -1,0 +1,9 @@
+# Allow-list: ship only what the extension needs at runtime.
+**
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!extension.js
+!lib/**
+!media/**

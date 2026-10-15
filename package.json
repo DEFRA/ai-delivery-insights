@@ -1,0 +1,279 @@
+{
+  "name": "ai-delivery-insights",
+  "displayName": "AI Delivery Insights",
+  "description": "See what every GitHub Copilot chat session and prompt cost, by workspace, repo and user story, straight from your local logs. Optionally link stories to Azure DevOps.",
+  "version": "0.5.3",
+  "publisher": "local",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DEFRA/ai-delivery-insights.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DEFRA/ai-delivery-insights/issues"
+  },
+  "homepage": "https://github.com/DEFRA/ai-delivery-insights#readme",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#141828",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "copilot",
+    "usage",
+    "tokens",
+    "credits",
+    "analytics",
+    "user story",
+    "cost",
+    "azure devops",
+    "effort"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In a workspace you have not trusted, AI Delivery Insights does not contact Azure DevOps and does not read git history. The dashboard, stories and tags work as usual."
+    },
+    "virtualWorkspaces": true
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./extension.js",
+  "scripts": {
+    "test": "node test/run-all.js",
+    "package": "vsce package --no-dependencies",
+    "package:ls": "vsce ls --tree"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "aiDeliveryInsights.open",
+        "title": "Open Dashboard",
+        "category": "AI Delivery Insights",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "aiDeliveryInsights.rescan",
+        "title": "Rescan Copilot History",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.exportCsv",
+        "title": "Export Usage as CSV",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.diagnose",
+        "title": "Diagnose (what data was found)",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.openStories",
+        "title": "Open Stories (cost per user story)",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.openStory",
+        "title": "Open a Story...",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.exportStoryCsv",
+        "title": "Export a Story as CSV...",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.exportTags",
+        "title": "Back Up Stories and Tags (JSON)",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.importTags",
+        "title": "Restore Stories and Tags from Backup...",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.adoConnect",
+        "title": "Azure DevOps: Connect...",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.adoImport",
+        "title": "Azure DevOps: Import Stories from the Backlog...",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.adoSetToken",
+        "title": "Azure DevOps: Set Personal Access Token (fallback)...",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.adoClearToken",
+        "title": "Azure DevOps: Remove Stored Token",
+        "category": "AI Delivery Insights"
+      },
+      {
+        "command": "aiDeliveryInsights.adoDisconnect",
+        "title": "Azure DevOps: Disconnect (turn off)",
+        "category": "AI Delivery Insights"
+      }
+    ],
+    "configuration": {
+      "title": "AI Delivery Insights",
+      "properties": {
+        "aiDeliveryInsights.monthlyAllowanceCredits": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "markdownDescription": "Credits included in your Copilot plan each month (1 credit = $0.01, so Pro = 1000, Pro+ = 3900). When set, the dashboard shows a monthly meter. Leave at 0 to hide it."
+        },
+        "aiDeliveryInsights.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show credits used over the last 7 days in the status bar."
+        },
+        "aiDeliveryInsights.extraDataDirs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "application",
+          "markdownDescription": "Extra VS Code `User` folders to scan, for example from another machine's backup or a custom `--user-data-dir`. Your own (user) settings only: a repository cannot set it."
+        },
+        "aiDeliveryInsights.pricing": {
+          "type": "object",
+          "default": {},
+          "scope": "application",
+          "markdownDescription": "Fallback rates in USD per 1M tokens, used only when Copilot did not record a billed cost. Keys match any part of the model name, e.g. `{ \"claude-sonnet\": { \"input\": 3, \"cachedInput\": 0.3, \"output\": 15 } }`. Your own (user) settings only: a repository cannot set it."
+        },
+        "aiDeliveryInsights.notifyOnBudget": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show a warning when a story goes over the credit budget you set for it. Shown once per story each time it crosses its budget."
+        },
+        "aiDeliveryInsights.statusBarScope": {
+          "type": "string",
+          "enum": [
+            "allWorkspaces",
+            "thisWindow"
+          ],
+          "default": "allWorkspaces",
+          "enumDescriptions": [
+            "The status bar number is credits over the last 7 days across every workspace on this machine.",
+            "The status bar number is credits over the last 7 days for this window's workspace only."
+          ],
+          "markdownDescription": "Which total the status bar shows. The tooltip always shows both."
+        },
+        "aiDeliveryInsights.ado.enabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "markdownDescription": "Turn on the Azure DevOps pages. While this is off AI Delivery Insights makes no network requests at all. Use **AI Delivery Insights: Azure DevOps: Connect** to turn it on, so the choice is explicit."
+        },
+        "aiDeliveryInsights.ado.organization": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "markdownDescription": "Your Azure DevOps organisation, for example `contoso` (the part after `https://dev.azure.com/`). Only `https://dev.azure.com` is ever contacted. This setting is read from your user settings only; a workspace cannot change it."
+        },
+        "aiDeliveryInsights.ado.project": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "markdownDescription": "The project that holds your stories. Used as the default on the import page."
+        },
+        "aiDeliveryInsights.ado.authMethod": {
+          "type": "string",
+          "enum": [
+            "microsoft",
+            "pat"
+          ],
+          "default": "microsoft",
+          "scope": "application",
+          "enumDescriptions": [
+            "Sign in with your Microsoft account through VS Code (recommended).",
+            "Use a personal access token kept in VS Code's secret storage (fallback)."
+          ],
+          "markdownDescription": "How AI Delivery Insights signs in to Azure DevOps."
+        },
+        "aiDeliveryInsights.ado.storyTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "User Story",
+            "Product Backlog Item",
+            "Requirement",
+            "Issue"
+          ],
+          "scope": "application",
+          "markdownDescription": "Work item types the import page lists as stories. Change this to match your process template (Agile: `User Story`, Scrum: `Product Backlog Item`, CMMI: `Requirement`, Basic: `Issue`)."
+        },
+        "aiDeliveryInsights.ado.shareName": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "markdownDescription": "Include your Azure DevOps display name next to your sessions in the synced report. Off by default: sessions are then listed under a random ID made for this VS Code installation."
+        },
+        "aiDeliveryInsights.effort.prodLinesPerDay": {
+          "type": "number",
+          "default": 150,
+          "scope": "application",
+          "minimum": 1,
+          "maximum": 100000,
+          "markdownDescription": "Traditional effort estimate: how many lines of production code a developer finishes in a working day (lines added plus half of lines deleted). An assumption; set your team's own. Your own (user) settings only."
+        },
+        "aiDeliveryInsights.effort.testLinesPerDay": {
+          "type": "number",
+          "default": 250,
+          "scope": "application",
+          "minimum": 1,
+          "maximum": 100000,
+          "markdownDescription": "Traditional effort estimate: how many lines of test code a developer finishes in a working day. Your own (user) settings only."
+        },
+        "aiDeliveryInsights.effort.hoursPerDay": {
+          "type": "number",
+          "default": 8,
+          "scope": "application",
+          "minimum": 1,
+          "maximum": 24,
+          "markdownDescription": "Traditional effort estimate: productive hours in a working day. Your own (user) settings only."
+        },
+        "aiDeliveryInsights.effort.overheadPercent": {
+          "type": "number",
+          "default": 25,
+          "scope": "application",
+          "minimum": 0,
+          "maximum": 500,
+          "markdownDescription": "Traditional effort estimate: extra time on top of the coding for clarifying the story, review, rework and builds, as a percentage. Your own (user) settings only."
+        },
+        "aiDeliveryInsights.effort.hoursPerPoint": {
+          "type": "number",
+          "default": 0,
+          "scope": "application",
+          "minimum": 0,
+          "maximum": 1000,
+          "markdownDescription": "Optional cross-check: how many hours one story point usually takes in your team. When set, the effort page compares the estimate with points x hours. 0 turns the check off. Your own (user) settings only."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^4.0.0",
+    "ajv": "^8.20.0",
+    "jsdom": "^29.1.1"
+  }
+}
